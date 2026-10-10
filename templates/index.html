@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Guard | Giới Hạn Mạng Xã Hội</title>
+<style>
+:root {
+  --bg: #0b0f19;
+  --card: #131b2e;
+  --card-border: #1e293b;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --emerald: #10b981;
+  --emerald-bg: #064e3b33;
+  --emerald-border: #059669;
+  --rose: #f43f5e;
+  --rose-bg: #88133733;
+  --rose-border: #e11d48;
+  --blue: #3b82f6;
+  --blue-bg: #1e3a8a33;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+}
+.container {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+}
+.header { text-align: center; margin-bottom: 20px; }
+.header h1 { font-size: 20px; font-weight: 700; }
+
+/* Status Banner */
+.status-card {
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+.status-card.blocked {
+  background: var(--emerald-bg);
+  border-color: var(--emerald-border);
+  color: #a7f3d0;
+}
+.status-card.unblocked {
+  background: var(--rose-bg);
+  border-color: var(--rose-border);
+  color: #fecdd3;
+}
+.status-title { font-size: 18px; font-weight: 700; }
+.timer-countdown { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+/* Quota meter */
+.quota-section {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.quota-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.quota-header span:first-child { color: var(--muted); }
+.quota-header span:last-child { font-weight: 600; }
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #ec4899);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.progress-bar-fill.danger { background: var(--rose); }
+
+/* Actions */
+.btn-primary-focus {
+  width: 100%;
+  padding: 12px;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.15s;
+}
+.btn-primary-focus:hover { background: #047857; }
+
+.break-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.btn-break {
+  padding: 10px 6px;
+  background: #1e293b;
+  color: var(--text);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-break:hover:not(:disabled) { background: #334155; }
+.btn-break:disabled, .btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.btn-secondary:hover:not(:disabled) { color: var(--text); border-color: #64748b; }
+
+/* Quota Setting Form */
+.settings-box {
+  border-top: 1px solid var(--card-border);
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.settings-box label { font-size: 13px; color: var(--muted); }
+.settings-input-group { display: flex; gap: 6px; }
+.settings-input-group input {
+  width: 70px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 13px;
+  text-align: center;
+}
+.btn-save {
+  padding: 5px 12px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-save:hover { background: #1d4ed8; }
+
+/* Tags */
+.domains-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+  justify-content: center;
+}
+.domain-tag {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  color: #64748b;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Heatmap */
+.heatmap-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 16px;
+}
+.hm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.hm-title { font-size: 13px; font-weight: 700; }
+.hm-sub { font-size: 11px; color: var(--muted); }
+.hm-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.hm-stat-box {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.hm-stat-label { font-size: 11px; color: var(--muted); }
+.hm-stat-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
+.hm-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 10px);
+  grid-auto-flow: column;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 2px 0 6px 0;
+  justify-content: center;
+}
+.hm-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #1e293b;
+  transition: transform 0.1s;
+}
+.hm-cell:hover:not(.hm-future) {
+  outline: 1px solid #94a3b8;
+  transform: scale(1.2);
+}
+.hm-future { opacity: 0.15; }
+.hm-lvl-0 { background: #1e293b; }
+.hm-lvl-1 { background: #1e40af; }
+.hm-lvl-2 { background: #2563eb; }
+.hm-lvl-3 { background: #3b82f6; }
+.hm-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.hm-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Focus Guard</h1>
+  </div>
+
+  <div class="status-card __CLS__">
+    <div class="status-title">__STATUS_TITLE__</div>
+    <div class="timer-countdown" id="timer-display" style="display: __SHOW_TIMER__;">__TIMER_STR__</div>
+  </div>
+
+  <div class="quota-section">
+    <div class="quota-header">
+      <span>Thời gian dùng</span>
+      <span>__USED__ / __LIMIT__ phút (còn __REMAIN__p)</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill __BAR_CLS__" style="width: __PERCENT__%;"></div>
+    </div>
+  </div>
+
+  <form method="POST" action="/action">
+    <button class="btn-primary-focus" name="act" value="block">
+      Chặn ngay
+    </button>
+
+    <div class="break-buttons">
+      <button class="btn-break" name="act" value="timer_5" __DISABLED__>5 phút</button>
+      <button class="btn-break" name="act" value="timer_15" __DISABLED__>15 phút</button>
+      <button class="btn-break" name="act" value="timer_25" __DISABLED__>25 phút</button>
+    </div>
+
+    <button class="btn-secondary" name="act" value="unblock" __DISABLED__>
+      Mở tự do
+    </button>
+
+    <div class="settings-box">
+      <label for="limit_min">Hạn mức (phút):</label>
+      <div class="settings-input-group">
+        <input type="number" id="limit_min" name="limit_min" value="__LIMIT__" min="1" max="1440">
+        <button class="btn-save" name="act" value="set_limit">Lưu</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="heatmap-card">
+    <div class="hm-header">
+      <span class="hm-title">Biểu đồ sử dụng</span>
+      <span class="hm-sub">20 tuần qua</span>
+    </div>
+    <div class="hm-stats">
+      <div class="hm-stat-box">
+        <div class="hm-stat-label">Số ngày dùng</div>
+        <div class="hm-stat-val">__ACTIVE_DAYS__</div>
+      </div>
+      <div class="hm-stat-box">
+        <div class="hm-stat-label">Tổng thời gian</div>
+        <div class="hm-stat-val">__TOTAL_MINS__p</div>
+      </div>
+    </div>
+    <div class="hm-grid">
+      __HEATMAP_CELLS__
+    </div>
+    <div class="hm-footer">
+      <span>Ít</span>
+      <div class="hm-legend">
+        <span class="hm-cell hm-lvl-0"></span>
+        <span class="hm-cell hm-lvl-1"></span>
+        <span class="hm-cell hm-lvl-2"></span>
+        <span class="hm-cell hm-lvl-3"></span>
+      </div>
+      <span>Nhiều</span>
+    </div>
+  </div>
+
+  <div class="domains-list">
+    __DOMAINS_HTML__
+  </div>
+</div>
+
+<script>
+// Live JS countdown without full page refresh
+let secondsLeft = __REM_SECONDS__;
+const timerEl = document.getElementById("timer-display");
+if (secondsLeft > 0 && timerEl) {
+  const interval = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0) {
+      clearInterval(interval);
+      location.reload();
+    } else {
+      const m = Math.floor(secondsLeft / 60);
+      const s = secondsLeft % 60;
+      timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+  }, 1000);
+}
+</script>
+</body>
+</html>
