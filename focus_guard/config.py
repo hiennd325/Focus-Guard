@@ -1,7 +1,8 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HOSTS_FILE = os.environ.get("HOSTS_PATH", "/etc/hosts")
+IPTABLES_CMD = os.environ.get("IPTABLES_CMD", "sudo iptables")
+IPTABLES_CHAIN = os.environ.get("IPTABLES_CHAIN", "FOCUS_GUARD")
 QUOTA_FILE = os.environ.get("QUOTA_PATH", os.path.join(BASE_DIR, "quota.json"))
 TEMPLATE_FILE = os.path.join(BASE_DIR, "templates", "index.html")
 
@@ -11,6 +12,4 @@ DOMAINS = [
     "tiktok.com",
     "www.tiktok.com",
     "x.com",
-    "youtube.com",
-    "www.youtube.com",
 ]

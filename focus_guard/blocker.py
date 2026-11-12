@@ -1,33 +1,35 @@
+import shlex
+import subprocess
 import time
+
 from . import config
 from . import quota
 
 timer_end = 0
 
-def is_blocked(hosts_file=None):
-    path = hosts_file or config.HOSTS_FILE
-    try:
-        with open(path, "r") as f:
-            content = f.read()
-        return all(f"127.0.0.1 {d}" in content for d in config.DOMAINS)
-    except Exception:
-        return False
+def _run(args):
+    cmd = shlex.split(config.IPTABLES_CMD) + args
+    return subprocess.run(cmd, capture_output=True, text=True)
 
-def set_block(block=True, hosts_file=None):
+def _ensure_chain():
+    _run(["-N", config.IPTABLES_CHAIN])
+    if _run(["-C", "OUTPUT", "-j", config.IPTABLES_CHAIN]).returncode != 0:
+        _run(["-I", "OUTPUT", "1", "-j", config.IPTABLES_CHAIN])
+
+def is_blocked():
+    res = _run(["-S", config.IPTABLES_CHAIN])
+    return res.returncode == 0 and f"-A {config.IPTABLES_CHAIN}" in res.stdout
+
+def set_block(block=True):
     global timer_end
     if block:
         timer_end = 0
-    path = hosts_file or config.HOSTS_FILE
-    try:
-        with open(path, "r") as f:
-            lines = [line for line in f.readlines() if not any(d in line for d in config.DOMAINS)]
-    except FileNotFoundError:
-        lines = []
+    _ensure_chain()
+    _run(["-F", config.IPTABLES_CHAIN])
+    # ponytail: resolve domain to IP at rule insertion, upgrade to ipset if domain IPs change often
     if block:
         for d in config.DOMAINS:
-            lines.append(f"127.0.0.1 {d}\n")
-    with open(path, "w") as f:
-        f.writelines(lines)
+            _run(["-A", config.IPTABLES_CHAIN, "-d", d, "-j", "REJECT"])
 
 def start_timer(minutes):
     global timer_end
