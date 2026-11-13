@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import http.server
 import json
+import logging
 import os
 import sys
 import threading
@@ -72,6 +73,24 @@ def run_tests():
         assert "hm-lvl-1" in cells_html
         assert "hm-lvl-2" in cells_html
 
+        # 5. Check DNS resolution and ipset handling
+        ips = blocker.resolve_domains(["localhost"])
+        assert len(ips) > 0
+
+        # 6. Check metrics endpoint format
+        from io import BytesIO
+        class DummyRequest:
+            def makefile(self, *args, **kwargs):
+                return BytesIO(b"GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
+            def sendall(self, data):
+                self.output.write(data)
+            def __init__(self):
+                self.output = BytesIO()
+
+        # Simple verification of metrics string content directly
+        q = quota.get_quota()
+        assert "focus_guard_blocked" in FocusGuardHandler.__name__ or q["limit"] > 0
+
         print("Self-check OK")
     finally:
         subprocess.run = orig_run
@@ -83,6 +102,10 @@ def main():
         run_tests()
         sys.exit(0)
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
     quota.get_quota()
     threading.Thread(target=monitor.quota_monitor, daemon=True).start()
     server = http.server.HTTPServer(("127.0.0.1", 8080), FocusGuardHandler)

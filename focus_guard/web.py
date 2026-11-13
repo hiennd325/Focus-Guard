@@ -16,6 +16,30 @@ def get_template():
 
 class FocusGuardHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.path == "/metrics":
+            blocked_val = 1 if blocker.is_blocked() else 0
+            q = quota.get_quota()
+            metrics = (
+                f"# HELP focus_guard_blocked Current block status (1=blocked, 0=unblocked)\n"
+                f"# TYPE focus_guard_blocked gauge\n"
+                f"focus_guard_blocked {blocked_val}\n"
+                f"# HELP focus_guard_quota_used_seconds Total quota used today in seconds\n"
+                f"# TYPE focus_guard_quota_used_seconds gauge\n"
+                f"focus_guard_quota_used_seconds {q['used']}\n"
+                f"# HELP focus_guard_quota_limit_seconds Daily quota limit in seconds\n"
+                f"# TYPE focus_guard_quota_limit_seconds gauge\n"
+                f"focus_guard_quota_limit_seconds {q['limit']}\n"
+                f"# HELP focus_guard_monitored_domains_count Number of configured domains\n"
+                f"# TYPE focus_guard_monitored_domains_count gauge\n"
+                f"focus_guard_monitored_domains_count {len(config.DOMAINS)}\n"
+            ).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+            self.send_header("Content-Length", str(len(metrics)))
+            self.end_headers()
+            self.wfile.write(metrics)
+            return
+
         blocked = blocker.is_blocked()
         q = quota.get_quota()
         rem_sec = max(0, q["limit"] - q["used"])

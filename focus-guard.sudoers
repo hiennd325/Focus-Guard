@@ -1,0 +1,3 @@
+# Template cau hinh sudoers cho Least Privilege
+# Copy vao /etc/sudoers.d/focus-guard va chmod 0440
+focusguard ALL=(ALL) NOPASSWD: /usr/sbin/iptables, /usr/sbin/ipset

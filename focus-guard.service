@@ -10,5 +10,15 @@ ExecStart=/usr/bin/python3 /mnt/Data/Project/Limit/app.py
 Restart=always
 RestartSec=3
 
+# Security Hardening & Isolation
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/Data/Project/Limit
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+# ponytail: chuyển User=focusguard kèm AmbientCapabilities=CAP_NET_ADMIN hoặc sudoers whitelist khi deploy production
+
 [Install]
 WantedBy=multi-user.target
